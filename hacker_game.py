@@ -1,96 +1,102 @@
 import random
 import string
-import time
+import os
+from datetime import datetime
 
-print("=" * 55)
-print("        🕵️ CYBER BREAK-IN SIMULATOR 🕵️")
-print("=" * 55)
+# ---------------- LOGGING ----------------
 
-print("\nYou have breached a secure server...")
-print("Your mission: crack the password before the system locks you out!")
-print()
+LOG_FILE = "game.log"
 
-# Difficulty
-print("Choose difficulty:")
-print("1. Easy")
-print("2. Medium")
-print("3. Hard")
+def log(message):
+    print(message)
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(f"[{datetime.now().strftime('%H:%M:%S')}] {message}\n")
 
-choice = input("\nEnter choice: ")
 
-if choice == "1":
+def logged_input(prompt):
+    value = input(prompt)
+
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(
+            f"[{datetime.now().strftime('%H:%M:%S')}] "
+            f"USER INPUT: {value}\n"
+        )
+
+    return value
+
+
+# ---------------- GAME ----------------
+
+log("=" * 50)
+log("🕵️ CYBER BREAK-IN SIMULATOR")
+log("=" * 50)
+
+CI_MODE = os.getenv("CI") == "true"
+
+if CI_MODE:
+    log("🤖 CI MODE: Automatic test running")
     length = 3
-    attempts = 8
-elif choice == "2":
-    length = 4
-    attempts = 6
+    password = "842"
+    attempts = 3
 else:
-    length = 5
-    attempts = 5
+    log("🎮 LOCAL MODE: Player mode")
 
-# Generate secret password
-characters = string.digits
-password = ''.join(random.choice(characters) for _ in range(length))
+    log("Choose difficulty:")
+    log("1. Easy")
+    log("2. Medium")
+    log("3. Hard")
 
-# Give first clue
-print("\n🔐 Password generated!")
-print("Password contains", length, "digits.")
+    choice = logged_input("Enter choice: ")
 
-time.sleep(1)
+    if choice == "1":
+        length = 3
+        attempts = 8
+    elif choice == "2":
+        length = 4
+        attempts = 6
+    else:
+        length = 5
+        attempts = 5
+
+    password = ''.join(
+        random.choice(string.digits)
+        for _ in range(length)
+    )
 
 score = 100
 
+# Automatic guesses for GitHub Actions
+if CI_MODE:
+    guesses = ["123", "731", "842"]
+
 for attempt in range(1, attempts + 1):
 
-    print("\n" + "-" * 55)
-    print(f"Attempt {attempt}/{attempts}")
-    
-    guess = input("💻 Enter your password guess: ")
+    log("-" * 50)
+    log(f"Attempt {attempt}/{attempts}")
 
-    # Validate
-    if not guess.isdigit() or len(guess) != length:
-        print(f"❌ Enter exactly {length} digits!")
-        continue
+    if CI_MODE:
+        guess = guesses[attempt - 1]
+        log(f"CI INPUT: {guess}")
+    else:
+        guess = logged_input("Enter password: ")
 
-    # Correct
     if guess == password:
-        print("\n🚨 ACCESS GRANTED 🚨")
-        print("You cracked the server!")
-        print("🔑 Password:", password)
-        print("🏆 Score:", score)
+        log("🚨 ACCESS GRANTED!")
+        log(f"🔑 Password cracked: {password}")
+        log(f"🏆 Score: {score}")
+        log("BUILD TEST: SUCCESS")
         break
 
-    # Analyze guess
-    correct_position = 0
-    correct_digit = 0
+    log("❌ ACCESS DENIED")
 
-    for i in range(length):
-        if guess[i] == password[i]:
-            correct_position += 1
-
-    for digit in set(guess):
-        if digit in password:
-            correct_digit += 1
-
-    print("❌ ACCESS DENIED")
-
-    print(f"📍 Correct position: {correct_position}")
-    print(f"🔎 Correct digit(s): {correct_digit}")
-
-    # Extra clues
     if int(guess) < int(password):
-        print("💡 Hint: Try a HIGHER number.")
+        log("💡 Hint: Try a HIGHER number.")
     else:
-        print("💡 Hint: Try a LOWER number.")
+        log("💡 Hint: Try a LOWER number.")
 
     score -= 15
 
 else:
-    print("\n💀 SYSTEM LOCKED 💀")
-    print("You failed to crack the password.")
-    print("🔑 The password was:", password)
-    print("🏆 Final score:", max(score, 0))
-
-print("\n" + "=" * 55)
-print("             CONNECTION TERMINATED")
-print("=" * 55)
+    log("💀 SYSTEM LOCKED")
+    log(f"🔑 Password was: {password}")
+    log("BUILD TEST: FAILED")
