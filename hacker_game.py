@@ -81,7 +81,7 @@ for attempt in range(1, attempts + 1):
         guess = logged_input("Enter password: ")
 
     if guess == password:
-        log("🚨 ACCESS GRANTED!")
+        log("🚨 SERVER HACKED SUCCESSFULLY!")
         log(f"🔑 Password cracked: {password}")
         log(f"🏆 Score: {score}")
         log("BUILD TEST: SUCCESS")
